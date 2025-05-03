@@ -14,7 +14,7 @@ class Application(tk.Tk):
         self.configure(bg="#f0f0f0")
         self.resizable(False, False)
 
-        self.mode = "manager"  # 初期はマネージャーモード
+        self.mode = "manager"
         self.hand_count = 1
         self.log_filename = None
 
@@ -61,11 +61,14 @@ class Application(tk.Tk):
         self.reset_button = tk.Button(button_frame, text="リセット", command=self.reset_cards)
         self.reset_button.pack(side=tk.LEFT, padx=10)
 
-        self.save_button = tk.Button(button_frame, text="保存", command=self.save_log)  # ← 修正箇所
+        self.save_button = tk.Button(button_frame, text="保存", command=self.save_log)
         self.save_button.pack(side=tk.LEFT, padx=10)
 
         self.toggle_button = tk.Button(button_frame, text="モード切替", command=self.toggle_mode)
         self.toggle_button.pack(side=tk.LEFT, padx=10)
+
+        self.game_reset_button = tk.Button(button_frame, text="ゲームリセット", command=self.game_reset)
+        self.game_reset_button.pack(side=tk.LEFT, padx=10)
 
         self.update_mode_appearance()
 
@@ -118,6 +121,12 @@ class Application(tk.Tk):
         self.read_uids.clear()
         self.update_display_for_mode()
 
+    def game_reset(self):
+        self.hand_count = 1
+        self.log_filename = None
+        self.hand_label.config(text=f"HAND {self.hand_count}")
+        self.reset_cards()
+
     def save_log(self):
         os.makedirs("log", exist_ok=True)
         if not self.log_filename:
@@ -151,7 +160,7 @@ class Application(tk.Tk):
 
     def handle_uid(self, uid):
         if uid in self.read_uids:
-            return  # 重複排除
+            return
 
         if uid in tag_database:
             card = tag_database[uid]

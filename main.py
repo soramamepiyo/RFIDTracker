@@ -122,6 +122,9 @@ class Application(tk.Tk):
         self.update_display_for_mode()
 
     def game_reset(self):
+        confirm = messagebox.askyesno("確認", "本当に対局をリセットしますか？")
+        if not confirm:
+            return
         self.hand_count = 1
         self.log_filename = None
         self.hand_label.config(text=f"HAND {self.hand_count}")

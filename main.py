@@ -3,6 +3,7 @@ from tkinter import messagebox
 import serial
 import threading
 from datetime import datetime
+import os
 from tag_info import tag_database
 
 class Application(tk.Tk):
@@ -13,18 +14,19 @@ class Application(tk.Tk):
         self.configure(bg="#f0f0f0")
         self.resizable(False, False)
 
-        self.mode = "manager"  # 初期はマネージャーモード
-
+        self.mode = "manager"
         self.card_data = {
             "P1": ["?", "?"],
             "P2": ["?", "?"],
             "BOARD": ["?", "?", "?", "?", "?"]
         }
         self.read_uids = set()
-        self.log_filename = f"log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
-        self.hand_count = 1  # HAND 番号カウント
-
         self.sections = {}
+        self.hand_count = 1
+        self.log_filename = f"log/log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+
+        os.makedirs("log", exist_ok=True)
+
         self.create_ui()
         self.update_display_for_mode()
 
@@ -36,7 +38,7 @@ class Application(tk.Tk):
         self.mode_label = tk.Label(self, text="Manager Mode", font=("Arial", 14, "bold"))
         self.mode_label.pack(pady=5)
 
-        self.hand_label = tk.Label(self, text="HAND 1", font=("Arial", 12))
+        self.hand_label = tk.Label(self, text="HAND 1", font=("Arial", 12, "bold"), bg="#f0f0f0")
         self.hand_label.pack()
 
         self.container = tk.Frame(self, bg="#f0f0f0")
@@ -97,7 +99,7 @@ class Application(tk.Tk):
         for area in ["P1", "P2"]:
             for i, card in enumerate(self.card_data[area]):
                 if self.mode == "player":
-                    display_value = "〇" if card != "?" else "?"
+                    display_value = "○" if card != "?" else "?"
                     color = "black"
                 else:
                     display_value = card
@@ -116,6 +118,8 @@ class Application(tk.Tk):
             "BOARD": ["?", "?", "?", "?", "?"]
         }
         self.read_uids.clear()
+        self.hand_count += 1
+        self.hand_label.config(text=f"HAND {self.hand_count}")
         self.update_display_for_mode()
 
     def save_log(self):
@@ -123,11 +127,8 @@ class Application(tk.Tk):
             f.write(f"HAND {self.hand_count}\n")
             f.write("P1: " + " ".join(self.card_data["P1"]) + "\n")
             f.write("P2: " + " ".join(self.card_data["P2"]) + "\n")
-            f.write("BOARD: " + " ".join(self.card_data["BOARD"]) + "\n")
-            f.write("\n")
-        self.hand_count += 1
-        self.hand_label.config(text=f"HAND {self.hand_count}")
-        messagebox.showinfo("保存完了", f"ログを {self.log_filename} に追記しました")
+            f.write("BOARD: " + " ".join(self.card_data["BOARD"]) + "\n\n")
+        messagebox.showinfo("保存完了", f"ログを {self.log_filename} に保存しました")
 
     def read_serial(self):
         try:
@@ -146,12 +147,9 @@ class Application(tk.Tk):
 
     def handle_uid(self, uid):
         if uid in self.read_uids:
-            return  # 重複排除
+            return
 
-        if uid in tag_database:
-            card = tag_database[uid]
-        else:
-            card = "?"
+        card = tag_database.get(uid, "?")
 
         placed = False
         for area in ["P1", "P2", "BOARD"]:

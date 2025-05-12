@@ -168,11 +168,17 @@ class Application(tk.Tk):
                 print("エラー:", e)
 
     def handle_uid(self, uid):
-        if uid in self.read_uids:
+        # 2ケタ区切りに変換（例：023EB102 → 02 3E B1 02）
+        formatted_uid = " ".join([uid[i:i+2] for i in range(0, len(uid), 2)])
+
+        print(f"UID 読み取り: {formatted_uid}")  # ここでUIDが正しく変換されているか確認
+    
+        if formatted_uid in self.read_uids:
             return
 
-        if uid in tag_database:
-            card = tag_database[uid]
+        # tag_databaseのキーと一致するか確認
+        if formatted_uid in tag_database:
+            card = tag_database[formatted_uid]
         else:
             card = "?"
 
@@ -181,7 +187,7 @@ class Application(tk.Tk):
             for i in range(len(self.card_data[area])):
                 if self.card_data[area][i] == "?":
                     self.card_data[area][i] = card
-                    self.read_uids.add(uid)
+                    self.read_uids.add(formatted_uid)
                     placed = True
                     break
             if placed:

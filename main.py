@@ -19,8 +19,8 @@ class Application(tk.Tk):
         self.log_filename = None
 
         self.card_data = {
-            "P1": ["?", "?"],
-            "P2": ["?", "?"],
+            "P1": ["?", "?"], 
+            "P2": ["?", "?"], 
             "BOARD": ["?", "?", "?", "?", "?"]
         }
         self.read_uids = set()
@@ -28,9 +28,13 @@ class Application(tk.Tk):
         self.create_ui()
         self.update_display_for_mode()
 
-        self.serial_thread = threading.Thread(target=self.read_serial)
-        self.serial_thread.daemon = True
-        self.serial_thread.start()
+        self.serial_threads = [
+            threading.Thread(target=self.read_serial, args=("COM3",)),  # COM3 for Arduino 1
+            threading.Thread(target=self.read_serial, args=("COM4",))   # COM4 for Arduino 2
+        ]
+        for thread in self.serial_threads:
+            thread.daemon = True
+            thread.start()
 
     def create_ui(self):
         self.mode_label = tk.Label(self, text="Manager Mode", font=("Arial", 14, "bold"))
@@ -114,14 +118,15 @@ class Application(tk.Tk):
 
     def reset_cards(self):
         self.card_data = {
-            "P1": ["?", "?"],
-            "P2": ["?", "?"],
+            "P1": ["?", "?"], 
+            "P2": ["?", "?"], 
             "BOARD": ["?", "?", "?", "?", "?"]
         }
         self.read_uids.clear()
         self.update_display_for_mode()
 
     def game_reset(self):
+        # ゲームリセット処理
         confirm = messagebox.askyesno("確認", "本当に対局をリセットしますか？")
         if not confirm:
             return
@@ -131,6 +136,7 @@ class Application(tk.Tk):
         self.reset_cards()
 
     def save_log(self):
+        # ログ保存処理
         os.makedirs("log", exist_ok=True)
         if not self.log_filename:
             now = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -146,11 +152,11 @@ class Application(tk.Tk):
         self.hand_label.config(text=f"HAND {self.hand_count}")
         self.reset_cards()
 
-    def read_serial(self):
+    def read_serial(self, port):
         try:
-            ser = serial.Serial("COM3", 9600, timeout=1)
+            ser = serial.Serial(port, 9600, timeout=1)
         except serial.SerialException:
-            print("シリアルポート COM3 が開けません")
+            print(f"シリアルポート {port} が開けません")
             return
 
         while True:

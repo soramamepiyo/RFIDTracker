@@ -1,45 +1,33 @@
 #include <SPI.h>
 #include <MFRC522.h>
 
-#define SS_PIN_1 7  // リーダー1のSDA（SS）ピン
-#define SS_PIN_2 5   // リーダー2のSDA（SS）ピン
-#define RST_PIN 9    // RSTは共通
+#define RST_PIN 9      // RC522 RST
+#define SS_PIN 8      // RC522 SDA/SS
 
-MFRC522 rfid1(SS_PIN_1, RST_PIN);
-MFRC522 rfid2(SS_PIN_2, RST_PIN);
+MFRC522 mfrc522(SS_PIN, RST_PIN);
 
 void setup() {
   Serial.begin(9600);
+  while (!Serial); // for Leonardo/Micro
   SPI.begin();
-  rfid1.PCD_Init();
-  rfid2.PCD_Init();
-  Serial.println("Ready to read from 2 RC522 readers.");
+  mfrc522.PCD_Init();
+  delay(4);
+  Serial.println("RC522 Reader Ready");
 }
 
 void loop() {
-  // リーダー1
-  if (rfid1.PICC_IsNewCardPresent() && rfid1.PICC_ReadCardSerial()) {
-    Serial.print("1:");
-    printUID(rfid1);
-    rfid1.PICC_HaltA();
-    rfid1.PCD_StopCrypto1();
-    delay(1000);
-  }
+  // RFIDタグの検出待ち
+  if (!mfrc522.PICC_IsNewCardPresent()) return;
+  if (!mfrc522.PICC_ReadCardSerial()) return;
 
-  // リーダー2
-  if (rfid2.PICC_IsNewCardPresent() && rfid2.PICC_ReadCardSerial()) {
-    Serial.print("2:");
-    printUID(rfid2);
-    rfid2.PICC_HaltA();
-    rfid2.PCD_StopCrypto1();
-    delay(1000);
-  }
-}
-
-void printUID(MFRC522 &reader) {
-  for (byte i = 0; i < reader.uid.size; i++) {
-    Serial.print(reader.uid.uidByte[i] < 0x10 ? " 0" : " ");
-    Serial.print(reader.uid.uidByte[i], HEX);
+  // UIDの出力
+  for (byte i = 0; i < mfrc522.uid.size; i++) {
+    if (mfrc522.uid.uidByte[i] < 0x10)
+      Serial.print("0");
+    Serial.print(mfrc522.uid.uidByte[i], HEX);
   }
   Serial.println();
+
+  // 読み取り後のクールタイム
+  delay(1000);
 }

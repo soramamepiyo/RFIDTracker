@@ -164,36 +164,38 @@ class Application(tk.Tk):
             try:
                 line = ser.readline().decode("utf-8").strip()
                 if line:
-                    self.handle_uid(line)
+                    # ポートに応じたセクションに追加
+                    if port == "COM3":
+                        target_area = "P1"
+                    elif port == "COM4":
+                        target_area = "P2"
+                    elif port == "COM5":
+                        target_area = "BOARD"
+                    else:
+                        target_area = None
+
+                    if target_area:
+                        self.handle_uid(line, target_area)
             except Exception as e:
                 print("エラー:", e)
 
-    def handle_uid(self, uid):
-        # 2ケタ区切りに変換（例：023EB102 → 02 3E B1 02）
+    def handle_uid(self, uid, target_area):
         formatted_uid = " ".join([uid[i:i+2] for i in range(0, len(uid), 2)])
+        print(f"UID 読み取り: {formatted_uid} → {target_area}")
 
-        print(f"UID 読み取り: {formatted_uid}")  # ここでUIDが正しく変換されているか確認
-    
         if formatted_uid in self.read_uids:
             return
 
-        # tag_databaseのキーと一致するか確認
-        if formatted_uid in tag_database:
-            card = tag_database[formatted_uid]
-        else:
-            card = "?"
+        card = tag_database.get(formatted_uid, "?")
 
-        placed = False
-        for area in ["P1", "P2", "BOARD"]:
-            for i in range(len(self.card_data[area])):
-                if self.card_data[area][i] == "?":
-                    self.card_data[area][i] = card
-                    self.read_uids.add(formatted_uid)
-                    placed = True
-                    break
-            if placed:
+        for i in range(len(self.card_data[target_area])):
+            if self.card_data[target_area][i] == "?":
+                self.card_data[target_area][i] = card
+                self.read_uids.add(formatted_uid)
                 break
+
         self.update_display_for_mode()
+
 
 if __name__ == "__main__":
     app = Application()

@@ -30,7 +30,8 @@ class Application(tk.Tk):
 
         self.serial_threads = [
             threading.Thread(target=self.read_serial, args=("COM3",)),  # COM3 for Arduino 1
-            threading.Thread(target=self.read_serial, args=("COM4",))   # COM4 for Arduino 2
+            threading.Thread(target=self.read_serial, args=("COM4",)),  # COM4 for Arduino 2
+            threading.Thread(target=self.read_serial, args=("COM5",))   # COM5 for Arduino 3
         ]
         for thread in self.serial_threads:
             thread.daemon = True
